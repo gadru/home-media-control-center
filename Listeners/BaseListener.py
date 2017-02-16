@@ -73,7 +73,7 @@ if __name__ == '__main__':
             self.cnt = 0
         def _pre_listen(self):
             self.cnt = 0
-            print("A")
+
         def _event_detect(self):
             self.cnt += 1
             if self.cnt == self.maxcnt:
@@ -81,13 +81,7 @@ if __name__ == '__main__':
                 return (1, 2, 3)
             else:
                 return None
+
         def _post_listen(self):
             self.cnt = 0
-            print("B")
-    def example():
-        """Run example subclass."""
-        example_listener = Listener(print, 1)
-        example_listener.listen()
-        time.sleep(3)
-        example_listener.stop()
-    example()
+

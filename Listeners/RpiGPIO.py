@@ -2,7 +2,7 @@
 """Listen for GPIO Button press."""
 
 import RPi.GPIO as GPIO
-from .BaseListener import BaseEventListener
+from Listeners.BaseListener import BaseEventListener
 
 class RpiGPIOPushButtonListener(BaseEventListener):
     """Listen for GPIO pulse push button."""
@@ -14,10 +14,11 @@ class RpiGPIOPushButtonListener(BaseEventListener):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.gpio_num, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     def _event_detect(self):
-        currently_pushed = GPIO.input(self.gpio_num) is False
-        triggered = currently_pushed and (not self.already_pushed)
-        self.already_pushed = currently_pushed
-        return triggered
+        input_state = GPIO.input(self.gpio_num)    
+        is_pushed = not input_state
+        trigger = is_pushed and (not self.already_pushed)
+        self.already_pushed = is_pushed
+        return trigger
 
 class RpiGPIOSwitchListener(BaseEventListener):
     """Listen for GPIO state switch button."""
@@ -31,6 +32,8 @@ class RpiGPIOSwitchListener(BaseEventListener):
         self.old_state = GPIO.input(self.gpio_num)
     def _event_detect(self):
         input_state = GPIO.input(self.gpio_num)
-        result = input_state != self.old_state
+        state_changed = input_state != self.old_state
         self.old_state = input_state
-        return result
+        if state_changed:
+            return [input_state]
+        return False

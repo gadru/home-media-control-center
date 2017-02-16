@@ -4,7 +4,7 @@
 import socket
 import struct
 import binascii
-from .BaseListener import BaseEventListener
+from Listeners.BaseListener import BaseEventListener
 
 def _parse_eth(packet):
     ethernet_header = packet[0][0:14]

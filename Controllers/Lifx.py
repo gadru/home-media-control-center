@@ -5,22 +5,32 @@ import lifxlan
 
 class Lifx:
     """A class that allows simple control for Lifx bulbs."""
-    def __init__(self):
+    def __init__(self,num_lights=None):
         self._no_color = [None, None, None, None]
-        self.lifx = lifxlan.LifxLAN()
-        self.bulbs, self.bulb_names = self._init_bulbs()
+        self._lifx = lifxlan.LifxLAN(num_lights)
+        self._bulbs = self._init_bulbs()
         #Keep old values
-        self.original_powers = self.lifx.get_power_all_lights()
-        self.original_colors = self.lifx.get_color_all_lights()
+        self._original_powers = self._lifx.get_power_all_lights()
+        self._original_colors = self._lifx.get_color_all_lights()
 
     def _init_bulbs(self):
         """Build Dictionary."""
-        bulbs_array = self.lifx.get_lights()
+        bulbs_array = self._lifx.get_lights()
         bulbs = {}
+        if bulbs_array is None:
+            return bulbs, set()
         for bulb in bulbs_array:
             bulbs[bulb.get_label()] = bulb
-        bulb_names = set(bulbs.keys())
-        return bulbs, bulb_names
+            bulbs[bulb.get_label()] = bulb
+        return bulbs
+
+    @property
+    def num_lights(self):
+        return set(self._bulbs.keys())
+
+    @property
+    def num_of_lights(self):
+        return len(self._bulbs)
 
     def _color_decode(self, color):
         color_temp = color
@@ -45,9 +55,9 @@ class Lifx:
         """Set status of a bulb.\n
         hue [0..360], saturation [0..1], kelvin [2500..9000], duration in seconds."""
 
-        if bulb_name not in self.bulbs:
+        if bulb_name not in self._bulbs:
             return
-        bulb = self.bulbs[bulb_name]
+        bulb = self._bulbs[bulb_name]
         color = self._translate_color(bulb.get_color(), hue, saturation,
                                       brightness, kelvin, duration, rapid)
         bulb.set_color(color[0], color[1], color[2])
@@ -59,7 +69,7 @@ class Lifx:
         """Set status of a list of bulb.\n
         hue [0..360], saturation [0..1], kelvin [2500..9000], duration in seconds."""
         if bulb_names is None:
-            bulb_names = self.bulb_names
+            bulb_names = self._bulb_names
         for bulb_name in bulb_names:
             self.set(bulb_name, hue, saturation, brightness, kelvin, power, duration, rapid)
 
@@ -68,7 +78,7 @@ class Lifx:
         """Set status of all bulbs except those in bulb_names_exluded.\n
         hue [0..360], saturation [0..1], kelvin [2500..9000], duration in seconds."""
         bulb_names_exluded_set = set(bulb_names_exluded)
-        bulb_names = self.bulb_names.difference(bulb_names_exluded_set)
+        bulb_names = self._bulb_names.difference(bulb_names_exluded_set)
         self.set_multi(bulb_names, hue, saturation, brightness, kelvin, power, duration, rapid)
 
     def set_all(self, hue, saturation,
@@ -76,21 +86,21 @@ class Lifx:
         """Set status of all bulbs.\n
         hue [0..360], saturation [0..1], kelvin [2500..9000], duration in seconds."""
         if power is not None:
-            self.lifx.set_power_all_lights(power)
+            self._lifx.set_power_all_lights(power)
         color = self._translate_color(self._no_color, hue, saturation,
                                       brightness, kelvin, duration, rapid)
-        self.lifx.set_color_all_lights(color[0], color[1], color[2])
+        self._lifx.set_color_all_lights(color[0], color[1], color[2])
 
     def set_all_power(self, power=True):
         """Control power of all bulbs"""
-        if power is True:
-            power = "on"
+        power_str = "on" if power else "off"
         if power in ["on", "off"]:
-            self.lifx.set_power_all_lights(power)
+            power_str = power
+        self._lifx.set_power_all_lights(power)
 
     def restore(self):
         """ Turn all the lights to the state saved on __init__()"""
-        for light, color in self.original_colors:
+        for light, color in self._original_colors:
             light.set_color(color)
-        for light, power in self.original_powers:
+        for light, power in self._original_powers:
             light.set_power(power)
