@@ -9,10 +9,6 @@ class Lifx:
         self._no_color = [None, None, None, None]
         self._lifx = lifxlan.LifxLAN(num_lights)
         self._bulbs = self._init_bulbs()
-        #Keep old values
-        self._original_powers = self._lifx.get_power_all_lights()
-        self._original_colors = self._lifx.get_color_all_lights()
-
     def _init_bulbs(self):
         """Build Dictionary."""
         bulbs_array = self._lifx.get_lights()
@@ -31,6 +27,21 @@ class Lifx:
     @property
     def num_of_lights(self):
         return len(self._bulbs)
+
+    def get_state(self):
+        return {"powers": self._lifx.get_power_all_lights(),
+            "colors": self._lifx.get_color_all_lights()}
+
+    def set_state(self,state):
+        """ Turn all the lights to the state given, formated as lifx.get_state()"""
+        if state is None:
+            return
+        powers = state["powers"]
+        colors = state["colors"]
+        for light, color in colors:
+            light.set_color(color)
+        for light, power in powers:
+            light.set_power(power)
 
     def _color_decode(self, color):
         color_temp = color
@@ -97,10 +108,3 @@ class Lifx:
         if power in ["on", "off"]:
             power_str = power
         self._lifx.set_power_all_lights(power)
-
-    def restore(self):
-        """ Turn all the lights to the state saved on __init__()"""
-        for light, color in self._original_colors:
-            light.set_color(color)
-        for light, power in self._original_powers:
-            light.set_power(power)

@@ -44,6 +44,13 @@ class Chromecast:
         chromecast_object.wait()
         return chromecast_object
 
+    def get_television(self):
+        """Returns a television chromecast. If there's more then one, returns an arbitrary one.
+        If There are no television chromecasts, returns None."""
+        if len(self.video) == 0:
+            return None
+        return self.video[0]
+
     def _get_chromecast_object(self, chromecast):
         if isinstance(chromecast, str):
             return self.get_chromecast_from_name(chromecast)
@@ -75,3 +82,8 @@ class Chromecast:
         chromecast is either friendly_name or pychromecast.Chromecast."""
         chromecast_object = self._get_chromecast_object(chromecast)
         return chromecast_object.status.display_name == 'Backdrop'
+
+    def quit_all(self):
+        """Stop all casting on network"""
+        for cc in self._friendly_names.values():
+            cc.quit_app()

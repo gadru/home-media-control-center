@@ -5,32 +5,27 @@ import threading
 
 class BaseEventListener:
     """Base class for listener object. An inheriting class should implement three functions:
-    self._event_detect() -> Checks if the event happend:
+    self._listen         -> <Optional> recieves a callback function and registers it.
+    self._pre_listen()   -> <Optional> Runs before listening start, when listen() is called.
+    self._post_listen()  -> <Optional> Runs when stop() is called.
+    self._event_detect() -> <Optional> Checks if the event happend, For polling.:
+                             Replaces _listen if defined
                             (*) If it happened,
                                 (**) If func recieves params,
                                     returns them as tuple, it'll run func(*params)
                                     (***) For one params, return (result)
                                 (**) Otherwise, simply Return True
-                            (*) Otherwise, the function may wait, return None, or return False.
-    self._pre_listen()   -> <Optional> Start listening.
-                            Runs before listening start, after listen() is called.
-    self._post_listen()  -> <Optional> End listening.
-                            Runs after stop() is called.
+                            (*) Otherwise, the function may wait, return None, or return False.                            
     """
 
-    def __init__(self, func, min_time_between_hits=0, min_time_between_misses=0):
+    def __init__(self, func=None, min_time_between_hits=0, min_time_between_misses=0):
         self._func = func
         self._min_time_between_hits = min_time_between_hits
         self.min_time_between_misses = min_time_between_misses
         self._running = False
         self._thread = None
-
-    def _listen_thread(self, func=None):
-        if func is not None:
-            self._func = func
-        if self._func is None:
-            raise ValueError('No Function given')
-        self._running = True
+    
+    def _listen_polling(self, func=None):
         self._pre_listen()
         while self._running:
             event_result = self._event_detect()
@@ -44,8 +39,16 @@ class BaseEventListener:
                 time.sleep(self.min_time_between_misses)
         self._post_listen()
 
+    def _listen_thread(self, func=None):
+        if func is not None:
+            self._func = func
+        if self._func is None:
+            raise ValueError('No Function given')
+        self._listen_polling(func)
+
     def listen(self, func=None):
         """Start listening. Run func when event happens."""
+        self._running = True
         self._thread = threading.Thread(target=self._listen_thread, args=(func, ))
         self._thread.start()
 
@@ -61,9 +64,6 @@ class BaseEventListener:
         """Allow not implementing anything at subclass."""
         pass
 
-    def _event_detect(self):
-        raise NotImplementedError("Subclass needs to implement _event_detect()")
-
 if __name__ == '__main__':
     class Listener(BaseEventListener):
         """Example subclass listener"""
@@ -73,7 +73,6 @@ if __name__ == '__main__':
             self.cnt = 0
         def _pre_listen(self):
             self.cnt = 0
-
         def _event_detect(self):
             self.cnt += 1
             if self.cnt == self.maxcnt:
