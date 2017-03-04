@@ -18,38 +18,36 @@ class BaseEventListener:
                             (*) Otherwise, the function may wait, return None, or return False.                            
     """
 
-    def __init__(self, func=None, min_time_between_hits=0, min_time_between_misses=0):
-        self._func = func
+    def __init__(self, resources, id, min_time_between_hits=0, min_time_between_misses=0):
+        self.id = id
+        self.resources = resources
         self._min_time_between_hits = min_time_between_hits
         self.min_time_between_misses = min_time_between_misses
         self._running = False
         self._thread = None
     
-    def _listen_polling(self, func=None):
+    def _listen_polling(self):
         self._pre_listen()
         while self._running:
             event_result = self._event_detect()
             if event_result not in (False, None):
                 if event_result is True:
-                    self._func()
+                    self.resources.do_action(self,self.id)
                 else:
-                    self._func(*event_result)
+                    self.resources.do_action(self,self.id,*event_result)
                 time.sleep(self._min_time_between_hits)
             else:
                 time.sleep(self.min_time_between_misses)
         self._post_listen()
 
-    def _listen_thread(self, func=None):
-        if func is not None:
-            self._func = func
-        if self._func is None:
-            raise ValueError('No Function given')
-        self._listen_polling(func)
+    def _listen_thread(self):
+        # TODO: if self._listen is implemented, run it instead.
+        self._listen_polling()
 
-    def listen(self, func=None):
-        """Start listening. Run func when event happens."""
+    def listen(self):
+        """Start listening. Run action when event happens."""
         self._running = True
-        self._thread = threading.Thread(target=self._listen_thread, args=(func, ))
+        self._thread = threading.Thread(target=self._listen_thread)
         self._thread.start()
 
     def stop(self):

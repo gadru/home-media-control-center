@@ -2,35 +2,34 @@
 """Links the listeners to their actions."""
 
 from __future__ import print_function
-import Model
+import Resources
+import Actions
 from Listeners.RpiGPIO import RpiGPIOPushButtonListener,RpiGPIOSwitchListener
-
-class Listeners:
-    def __init__(self):
-        self._listeners = dict()
-        self.model = Model.Model()
-        self._listeners["sRED"] = RpiGPIOPushButtonListener(19, self.model.kodi_play_pause)
-        self._listeners["bRED"] = RpiGPIOPushButtonListener(06, self.model.house_off)
-        self._listeners["trbo"] = RpiGPIOPushButtonListener(26, self.model.kodi_step_back)
-        self._listeners["rset"] = RpiGPIOPushButtonListener(12, self.model.kodi_step_forward)
-        self._listeners["miSW"] = RpiGPIOSwitchListener(20, self.model.kodi_lifx_ambilight)
-        self._listeners["edSW"] = RpiGPIOSwitchListener(21, self.model.lights_control)
-        self._listeners["uTRI"] = RpiGPIOSwitchListener(13, self.model.lights_off)
-        self._listeners["dTRI"] = RpiGPIOSwitchListener(16, self.model.lights_dark_blue)
-    def listen(self):
-        for l in self._listeners.values():
-            l.listen()
-    def stop(self):
-        for l in self._listeners.values():
-            l.stop()
+            
 if __name__ == '__main__':
     print("starting...")
-    l = Listeners()
-    l.listen()
+    resources = Resources.Resources()
+    resources.add_listener(RpiGPIOPushButtonListener(resources, "sRED", 19))
+    resources.add_listener(RpiGPIOPushButtonListener(resources, "bRED", 06))
+    resources.add_listener(RpiGPIOPushButtonListener(resources, "trbo", 26))
+    resources.add_listener(RpiGPIOPushButtonListener(resources, "rset", 12))
+    resources.add_listener(RpiGPIOSwitchListener    (resources, "miSW", 20))
+    resources.add_listener(RpiGPIOSwitchListener    (resources, "edSW", 21))
+    resources.add_listener(RpiGPIOSwitchListener    (resources, "uTRI", 13))
+    resources.add_listener(RpiGPIOSwitchListener    (resources, "dTRI", 16))
+    resources.add_action(Actions.kodi_play_pause     , "kodi_play_pause    " , "kodi_play_pause    " , "sRED"
+    resources.add_action(Actions.house_off           , "house_off          " , "house_off          " , "bRED"
+    resources.add_action(Actions.kodi_step_back      , "kodi_step_back     " , "kodi_step_back     " , "trbo"
+    resources.add_action(Actions.kodi_step_forward   , "kodi_step_forward  " , "kodi_step_forward  " , "rset"
+    resources.add_action(Actions.kodi_lifx_ambilight , "kodi_lifx_ambilight" , "kodi_lifx_ambilight" , "miSW"
+    resources.add_action(Actions.lights_control      , "lights_control     " , "lights_control     " , "edSW"
+    resources.add_action(Actions.lights_off          , "lights_off         " , "lights_off         " , "uTRI"
+    resources.add_action(Actions.lights_dark_blue    , "lights_dark_blue   " , "lights_dark_blue   " , "dTRI"
+    resources.listeners_start_all()
     print("started.")
     try:
         while 1:
             pass
     except KeyboardInterrupt:
-        l.stop()
+        resources.listeners_stop_all()
         print("stopped.")

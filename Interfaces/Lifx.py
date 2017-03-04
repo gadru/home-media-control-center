@@ -107,4 +107,5 @@ class Lifx:
         power_str = "on" if power else "off"
         if power in ["on", "off"]:
             power_str = power
-        self._lifx.set_power_all_lights(power)
+        self._lifx.set_power_all_lights(power)      
+        

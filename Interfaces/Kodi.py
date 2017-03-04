@@ -4,7 +4,7 @@ import socket
 import struct
 import sys
 
-class Kodi():
+class Kodi:
     def __init__(self,hostname,mac_address=None,user='xbmc',password='xbmc'):
         self.hostname  = hostname.upper()
         self.mac = mac_address
