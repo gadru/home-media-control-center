@@ -32,9 +32,9 @@ class BaseEventListener:
             event_result = self._event_detect()
             if event_result not in (False, None):
                 if event_result is True:
-                    self.resources.do_action(self,self.id)
+                    self.resources.do_action(self.id)
                 else:
-                    self.resources.do_action(self,self.id,*event_result)
+                    self.resources.do_action(self.id,*event_result)
                 time.sleep(self._min_time_between_hits)
             else:
                 time.sleep(self.min_time_between_misses)

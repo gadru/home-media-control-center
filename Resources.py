@@ -4,46 +4,61 @@ import collections
 import Interfaces
 
 class Action:
-    def __init__(self,resources,func,id,description,):
+    def __init__(self, resources, func, id, description):
         self.id = str(id)
         self.description = str(description)
+        self.resources = resources
         self.func = func
     def __call__(self, *args, **kwargs):
-        self.func(*args, **kwargs)
+        try:
+            self.func(self.resources, *args, **kwargs)
+        except:
+            print "Action Failed."
 
 class Resources:
     def __init__(self):
         self.interfaces = dict()
+        print "creating interfaces:"
+        print "Lifx"
         self.interfaces["Lifx"] = Interfaces.Lifx.Lifx()
+        print "Kodi"
         self.interfaces["Kodi"] = Interfaces.Kodi.Kodi('jesse')
+        print "Chromecast"
         self.interfaces["Chromecast"] = Interfaces.Chromecast.Chromecast()
-        self.stored_data = collections.defaultdict(dict)
-        self.listeners = dict()
-        self.available_actions =  dict()
-        self.listeners_actions = dict()
-
-    def do_action(self,listener_id,*args,**kwargs):
-        """Performs the action registered to the listener, passes *args,**kwargs as arguments."""
-        action_id = self.listeners_actions[listener_id]
-        action = self.available_actions[action_id]
-        action(*args,**kwargs)
+        print "Created interfaces."
+        self.stored_data = collections.defaultdict(dict) # Data and states for actions.
+        self.listeners = dict() # Objects that inherit from BaseListener class.
+        self.available_actions =  dict() # All Actions in the system.
+        self.listener_id_to_action_id = dict() # Choose what function the listeners activates.
+        self._add_action_default() 
+        
+    def _add_action_default(self):
+        """Add a default action to all listeners."""
+        def not_implemented(*args,**kwargs):
+            raise NotImplementedError
+        self.add_action(not_implemented, "not_implemented_action", "Action not implemented")
 
     def register_action(self,listener_id,action_id):
         """Set a given action to be triggered by event from given listener."""
+        print "requests to add action %s to listener %s"%(action_id,listener_id)
         if action_id in self.available_actions:
-            self.listeners_actions[listener_id] = action_id
+            print "Action registered."
+            self.listener_id_to_action_id[listener_id] = action_id
+        
+    def add_listener(self,listener_object):
+        """Add a new listener object"""
+        #TODO: consider creating the listener inside this function.
+        self.listeners[listener_object.id] = listener_object
+        self.register_action(listener_object.id, "not_implemented_action")
 
     def add_action(self, func, id, description="",listener_id=None):
         """Add a new action to be available. Add listener_id to also register it."""
         # TODO: verify id is unique. 
-        action = Action(func, id, description)
+        print "added action: %s"%str(id)
+        action = Action(self, func, id, description)
         self.available_actions[id] = action
         if listener_id is not None:
             self.register_action(listener_id,action.id)
-    
-    def add_listener(self,listener_object):
-        #TODO: consider creating the listener inside this function.
-        self.listeners[listener_object.id] = listener_object
 
     def listeners_start_all(self):
         """Start all listeners."""
@@ -54,3 +69,15 @@ class Resources:
         """Start all listeners."""
         for l in self.listeners.values():
             l.stop()
+
+    def do_action(self,listener_id,*args,**kwargs):
+        """Performs the action registered to the listener, passes *args,**kwargs as arguments."""
+        try:
+            action_id = self.listener_id_to_action_id[listener_id]
+        except KeyError:
+            print "Failed to find action for listener_id: %s"%listener_id
+        try:
+            action = self.available_actions[action_id]
+        except:
+            print "Failed to find action_id: %s"%action_id
+        action(*args,**kwargs)
