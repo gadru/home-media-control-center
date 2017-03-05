@@ -1,0 +1,8 @@
+def execute(resources):
+    """Turn off Lights, Turn off TV, and Stop all Chromecasts."""
+    resources.interfaces["Lifx"].set_all_power(False)
+    # Turn TV off
+    if resources.interfaces["Chromecast"].is_active(resources.interfaces["Chromecast"].get_television()):
+        resources.interfaces["Kodi"].navHome()
+    resources.interfaces["Chromecast"].quit_all()
+    

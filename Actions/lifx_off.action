@@ -1,0 +1,7 @@
+def execute(resources,start):
+    """Turn Lifx bulbs off, and restore."""
+    if start:
+        resources.stored_data["light_state"] = resources.interfaces["Lifx"].get_state()
+        resources.interfaces["Lifx"].set_all_power(False)
+    else:
+        resources.interfaces["Lifx"].set_state(resources.stored_data["light_state"])

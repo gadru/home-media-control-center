@@ -4,11 +4,13 @@ import collections
 import Interfaces
 
 class Action:
-    def __init__(self, resources, func, id, description):
+    def __init__(self, resources, func_text, id, description):
         self.id = str(id)
-        self.description = str(description)
         self.resources = resources
-        self.func = func
+        self.func_text = func_text
+        exec(func_text)
+        self.func = execute
+        self.description = description if description is not None else execute.__doc__
     def __call__(self, *args, **kwargs):
         try:
             self.func(self.resources, *args, **kwargs)
@@ -34,8 +36,7 @@ class Resources:
         
     def _add_action_default(self):
         """Add a default action to all listeners."""
-        def not_implemented(*args,**kwargs):
-            raise NotImplementedError
+        not_implemented ="""def execute(*args,**kwargs):\n\traise NotImplementedError"""
         self.add_action(not_implemented, "not_implemented_action", "Action not implemented")
 
     def register_action(self,listener_id,action_id):
@@ -51,11 +52,11 @@ class Resources:
         self.listeners[listener_object.id] = listener_object
         self.register_action(listener_object.id, "not_implemented_action")
 
-    def add_action(self, func, id, description="",listener_id=None):
+    def add_action(self, func_text, id, description=None,listener_id=None):
         """Add a new action to be available. Add listener_id to also register it."""
         # TODO: verify id is unique. 
         print "added action: %s"%str(id)
-        action = Action(self, func, id, description)
+        action = Action(self, func_text, id, description)
         self.available_actions[id] = action
         if listener_id is not None:
             self.register_action(listener_id,action.id)
@@ -65,13 +66,14 @@ class Resources:
         for l in self.listeners.values():
             l.listen()
 
-    def listeners_stop_all(self_all_listeners):
+    def listeners_stop_all(self):
         """Start all listeners."""
         for l in self.listeners.values():
             l.stop()
 
     def do_action(self,listener_id,*args,**kwargs):
         """Performs the action registered to the listener, passes *args,**kwargs as arguments."""
+        print "Triggered %s"%str(listener_id)
         try:
             action_id = self.listener_id_to_action_id[listener_id]
         except KeyError:

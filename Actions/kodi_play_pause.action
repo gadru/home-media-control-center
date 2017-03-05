@@ -1,0 +1,3 @@
+def execute(resources):
+    """Kodi playback play or pause."""
+    resources.interfaces["Kodi"].play_pause()

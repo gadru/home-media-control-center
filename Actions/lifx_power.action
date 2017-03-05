@@ -1,0 +1,5 @@
+def execute(resources,state):
+    """Turn Lifx bulbs off and on."""
+    """Turn Lifx lights on or off"""
+    power = True if state else False
+    resources.interfaces["Lifx"].set_all_power(power)
