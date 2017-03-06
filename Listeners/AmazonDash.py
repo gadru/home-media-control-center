@@ -16,7 +16,7 @@ def _is_arp(etherdst, ethertype):
 
 class AmazonDashButtonListener(BaseEventListener):
     """Listen for Amazon Dash Buttons."""
-    def __init__(self, resources, id, mac_address, min_time_between_presses=5, allowed_ifs=None):
+    def __init__(self, resources, id, display_name, mac_address, min_time_between_presses=5, allowed_ifs=None):
         self.allowed_ifs = allowed_ifs
         BaseEventListener.__init__(self, resources, id, min_time_between_presses)
         self.mac_address = mac_address

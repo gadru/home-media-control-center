@@ -18,8 +18,9 @@ class BaseEventListener:
                             (*) Otherwise, the function may wait, return None, or return False.                            
     """
 
-    def __init__(self, resources, id, min_time_between_hits=0, min_time_between_misses=0):
+    def __init__(self, resources, id, display_name, min_time_between_hits=0, min_time_between_misses=0):
         self.id = id
+        self.display_name = display_name
         self.resources = resources
         self._min_time_between_hits = min_time_between_hits
         self.min_time_between_misses = min_time_between_misses

@@ -20,14 +20,9 @@ class Action:
 class Resources:
     def __init__(self):
         self.interfaces = dict()
-        print "creating interfaces:"
-        print "Lifx"
         self.interfaces["Lifx"] = Interfaces.Lifx.Lifx()
-        print "Kodi"
         self.interfaces["Kodi"] = Interfaces.Kodi.Kodi('jesse')
-        print "Chromecast"
         self.interfaces["Chromecast"] = Interfaces.Chromecast.Chromecast()
-        print "Created interfaces."
         self.stored_data = collections.defaultdict(dict) # Data and states for actions.
         self.listeners = dict() # Objects that inherit from BaseListener class.
         self.available_actions =  dict() # All Actions in the system.
@@ -43,7 +38,6 @@ class Resources:
         """Set a given action to be triggered by event from given listener."""
         print "requests to add action %s to listener %s"%(action_id,listener_id)
         if action_id in self.available_actions:
-            print "Action registered."
             self.listener_id_to_action_id[listener_id] = action_id
         
     def add_listener(self,listener_object):
