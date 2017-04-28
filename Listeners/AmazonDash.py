@@ -16,9 +16,9 @@ def _is_arp(etherdst, ethertype):
 
 class AmazonDashButtonListener(BaseEventListener):
     """Listen for Amazon Dash Buttons."""
-    def __init__(self, resources, id, display_name, mac_address, min_time_between_presses=5, allowed_ifs=None):
+    def __init__(self, resources, id, params, display_name, mac_address, min_time_between_presses=5, allowed_ifs=None):
         self.allowed_ifs = allowed_ifs
-        BaseEventListener.__init__(self, resources, id, min_time_between_presses)
+        BaseEventListener.__init__(self, resources, id, params, min_time_between_presses)
         self.mac_address = mac_address
         self.raw_socket = None
 
@@ -39,7 +39,7 @@ class AmazonDashButtonListener(BaseEventListener):
 
     def _get_click(self, packet):
         if not self._is_valid_interface(packet):
-            return None
+            return False
         etherdst, ethersrc, ethertype = _parse_eth(packet)
         if _is_arp(etherdst, ethertype):
             if self._is_valid_src(ethersrc):
@@ -52,8 +52,7 @@ class AmazonDashButtonListener(BaseEventListener):
 
     def _event_detect(self):
         packet = self._recieve_packet()
-        mac_address = self._get_click(packet)
-        return mac_address is not None
+        return self._get_click(packet)
 
     def _post_listen(self):
         self.raw_socket.shutdown()

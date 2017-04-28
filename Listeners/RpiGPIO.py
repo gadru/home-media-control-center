@@ -6,8 +6,8 @@ from Listeners.BaseListener import BaseEventListener
 
 class RpiGPIOPushButtonListener(BaseEventListener):
     """Listen for GPIO pulse push button."""
-    def __init__(self, resources, id, display_name, gpio_num, min_time_between_presses=0.4):
-        BaseEventListener.__init__(self, resources, id, min_time_between_presses)
+    def __init__(self, resources, id, params,display_name, gpio_num, min_time_between_presses=0.4):
+        BaseEventListener.__init__(self, resources, id, params, min_time_between_presses)
         self.gpio_num = gpio_num
         self.already_pushed = True
     def _pre_listen(self):
@@ -24,8 +24,8 @@ class RpiGPIOPushButtonListener(BaseEventListener):
 
 class RpiGPIOSwitchListener(BaseEventListener):
     """Listen for GPIO state switch button."""
-    def __init__(self, resources, id, display_name, gpio_num, min_time_between_presses=0.4):
-        BaseEventListener.__init__(self, resources, id, min_time_between_presses)
+    def __init__(self, resources, id, params, display_name, gpio_num, min_time_between_presses=0.4):
+        BaseEventListener.__init__(self, resources, id, params, min_time_between_presses)
         self.gpio_num = gpio_num
         self.old_state = False
     def _pre_listen(self):

@@ -1,0 +1,10 @@
+def execute(resources):
+    """Toggle Bedroom Lifx bulb"""
+    bulb_names = ["Work Room","Living Room", "Kitchen"]
+    
+    state = resources.interfaces["Lifx"].get_bulb_state("Bedroom")
+    if state["power"]:
+        resources.interfaces["Lifx"].set(bulb_name, power=False)
+    else:
+        resources.interfaces["Lifx"].set(bulb_name, power=True)
+        resources.interfaces["Lifx"].set(bulb_name, power=True)

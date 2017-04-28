@@ -18,7 +18,8 @@ class BaseEventListener:
                             (*) Otherwise, the function may wait, return None, or return False.                            
     """
 
-    def __init__(self, resources, id, display_name, min_time_between_hits=0, min_time_between_misses=0):
+    def __init__(self, resources, id, params, display_name, min_time_between_hits=0, min_time_between_misses=0):
+        self.params = params
         self.id = id
         self.display_name = display_name
         self.resources = resources
@@ -62,6 +63,9 @@ class BaseEventListener:
     def _post_listen(self):
         """Allow not implementing anything at subclass."""
         pass
+
+    def copy(self):
+        return self.params.copy()
 
 if __name__ == '__main__':
     class Listener(BaseEventListener):

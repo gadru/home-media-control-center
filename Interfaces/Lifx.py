@@ -9,6 +9,7 @@ class Lifx:
         self._no_color = [None, None, None, None]
         self._lifx = lifxlan.LifxLAN(num_lights)
         self._bulbs = self._init_bulbs()
+        
     def _init_bulbs(self):
         """Build Dictionary."""
         bulbs_array = self._lifx.get_lights()
@@ -28,7 +29,15 @@ class Lifx:
     def num_of_lights(self):
         return len(self._bulbs)
 
+    def get_bulb_state(self, bulb_label):
+        """Get state of single bulb (Right now only supports power)"""
+        bulb = self._bulbs[bulb_label]
+        result = dict()
+        result["power"] = bulb.get_power()!=0
+        return result
+
     def get_state(self):
+        """Get the state of all the bulbs"""
         return {"powers": self._lifx.get_power_all_lights(),
             "colors": self._lifx.get_color_all_lights()}
 
