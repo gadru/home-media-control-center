@@ -12,32 +12,30 @@ def set_registrations(hs,data):
             hs.resources.registration.register(listener_id, new_action_id)
         else:
             hs.resources.registration.unregister(listener_id)
-            
-def registration_schema(resources):
-    """Get the json schema to create form for registration."""
-    registrations = resources.registration.get_data()
-    listeners_data = resources.listeners.get_data()
-    available_actions = resources.actions.get_data()
-    actions_ids = available_actions.keys()
-    available_actions_names = [action_obj.doc for action_obj in available_actions.values()]
-    properties = dict()
-    for listener_id, listener_obj in listeners_data.iteritems():
-        display_name = listener_obj.params["display_name"]
-        '''properties[listener_id] = { "title": display_name,
-                                    "type": "string",
-                                    "enum": actions_ids,
-                                    "enum_titles": available_actions_names,
-                                    "default": registrations[listener_id]
-                                  }'''
-        properties[listener_id] = { "title": display_name,
-                                    "type": "string",
-                                    "enum": actions_ids,
-                                    "enum_titles": available_actions_names,
-                                    "default": registrations[listener_id]
-                                  }
 
-    result= {"schema": {"type": "object",
-                    "title": "Regitrations",
-                    "properties": properties}}
-    pprint(result)                    
-    return result
+def get_data(hs):
+    data = dict()
+    registrations = hs.get_registrations()
+    listeners = hs.get_listeners()
+    actions = hs.get_actions()
+    
+    data["registrations"]=dict()
+    action_names = dict()
+    for action_id in actions:
+        action_names[action_id] = actions[action_id]["display_name"]
+    
+    for listener_id, action_id in hs.get_registrations().iteritems():
+        listener_display_name = listeners[listener_id]["display_name"]
+        action_display_name = actions[action_id]["display_name"]
+        data["registrations"][listener_id] = {\
+                "listener_display_name" : listener_display_name,
+                "action_id" : action_id,
+                "action_display_name" : action_display_name,
+                "options" : action_names,
+                "chosen_option": registrations[listener_id]
+            }
+    
+    data["actions"] = actions
+    data["listeners"] = listeners
+        
+    return data

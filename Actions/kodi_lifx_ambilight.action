@@ -1,6 +1,6 @@
-import time
 def execute(resources,state):
     r"""Enable\Disable the Kodi extension KodiLifxAmbilight."""
+    import time
     enabled = True if state else False
     print "kodi_lifx_ambilight:: ",'state:',state,', enabled:',enabled
     resources.interfaces["Kodi"].addon_enable(u'script.kodi.lifx.ambilight',enabled)

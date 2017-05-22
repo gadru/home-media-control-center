@@ -1,88 +1,47 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <!-- Foundation CSS framework (Bootstrap and jQueryUI also supported) -->
-    <link rel='stylesheet' href='http://cdn.jsdelivr.net/foundation/5.0.2/css/foundation.min.css'>
-    <!-- Font Awesome icons (Bootstrap, Foundation, and jQueryUI also supported) -->
-    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.css'>
-    <title>Home Server</title>
-    <!--<script src="{{ request.script_root|tojson|safe }}/js/jsoneditor.min.js"></script>-->
-    <script type="text/javascript" src="js/jsoneditor.min.js"></script>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    
+    <title>Home Server</title>
+    
   </head>
   <body>
-
-    <div id='registrations_container'></div>
-    <button id='registrations_submit'>Submit</button>
-    <button id='registrations_save'>Save</button>
-    <div id='actions_container'></div>
-    <button id='actions_submit'>Submit</button>
-    <button id='actions_save'>Save</button>
+    <div id="registrations"></div>
     
     <script>
-    JSONEditor.defaults.options.theme = 'bootstrap2';
-
-    var registrations_data;
-    var registrations_editor;
-    $.getJSON("registrations_data", function(json){
-        registrations_data = json;
-        registrations_editor = new JSONEditor(document.getElementById('registrations_container'),registrations_data);          
-        document.getElementById('registrations_submit').addEventListener('click',function() {
-            $.ajax({
-                type : "POST",
-                url : "registrations_submit",
-                data: JSON.stringify(registrations_editor.getValue(), null, '\t'),
-                contentType: 'application/json;charset=UTF-8',
-                success: function(result) {
-                    alert(result);
-                }
+    var write_registrations = function(json){
+        $("#registrations").empty()            
+        var registrations = json["registrations"];
+        
+        $.each(registrations, function(listener_id,reg_data)
+        {
+            var action_options_dict = reg_data["options"];
+            var action_options = ""
+            $.each(action_options_dict, function(action_id, action_display_name){
+                action_options += '<option value="'+action_id+'">'+action_display_name+'</option>'
             });
-        });
-        document.getElementById('registrations_save').addEventListener('click',function() {
-            $.ajax({
-                type : "POST",
-                url : "registrations_save",
-                data: JSON.stringify(registrations_editor.getValue(), null, '\t'),
-                contentType: 'application/json;charset=UTF-8',
-                success: function(result) {
-                    alert(result);
-                }
-            });
-        });                
-    });
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-
-    var actions_data;
-    var actions_editor;
-    $.getJSON("actions_data", function(json){
-        actions_data = json;
-        actions_editor = new JSONEditor(document.getElementById('actions_container'),actions_data);          
-        document.getElementById('actions_submit').addEventListener('click',function() {
-            $.ajax({
-                type : "POST",
-                url : "actions_submit",
-                data: JSON.stringify(actions_editor.getValue(), null, '\t'),
-                contentType: 'application/json;charset=UTF-8',
-                success: function(result) {
-                    alert(result);
-                }
-            });
-        });
-        document.getElementById('actions_save').addEventListener('click',function() {
-            $.ajax({
-                type : "POST",
-                url : "actions_save",
-                data: JSON.stringify(actions_editor.getValue(), null, '\t'),
-                contentType: 'application/json;charset=UTF-8',
-                success: function(result) {
-                    alert(result);
-                }
-            });
-        });                
-    });
+            
+            $("#registrations").append($("<div>", {"class": "listener_name", "text" : reg_data["listener_display_name"]}));
+            select = $("<select>", {"class": "action_id"}).append(action_options);
+            select.val(reg_data["chosen_option"]);
+            $("#registrations").append(select);
+        })
+        
+    };
+    
+    var write_data = function(json){            
+        write_registrations(json);
+    };
+    
+    var update_data = function(){
+        var baseUrl = "http://dexter:8080"
+        var getDataUrl = baseUrl+"/get_data"
+        $.getJSON(getDataUrl, write_data);
+        
+    }
+    update_data()
     </script>
   </body>
 </html>

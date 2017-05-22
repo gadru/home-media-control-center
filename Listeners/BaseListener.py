@@ -18,7 +18,8 @@ class BaseEventListener:
                             (*) Otherwise, the function may wait, return None, or return False.                            
     """
 
-    def __init__(self, resources, id, params, display_name, min_time_between_hits=0, min_time_between_misses=0):
+    def __init__(self, resources, id, display_name, params, classname, min_time_between_hits=0, min_time_between_misses=0):
+        self.classname = classname
         self.params = params
         self.id = id
         self.display_name = display_name
@@ -34,9 +35,9 @@ class BaseEventListener:
             event_result = self._event_detect()
             if event_result not in (False, None):
                 if event_result is True:
-                    self.resources.actions.execute(self.id)
+                    self.resources.action_execute(self.id)
                 else:
-                    self.resources.actions.execute(self.id,*event_result)
+                    self.resources.action_execute(self.id,*event_result)
                 time.sleep(self._min_time_between_hits)
             else:
                 time.sleep(self.min_time_between_misses)
@@ -64,7 +65,7 @@ class BaseEventListener:
         """Allow not implementing anything at subclass."""
         pass
 
-    def copy(self):
+    def get_params(self):
         return self.params.copy()
 
 if __name__ == '__main__':

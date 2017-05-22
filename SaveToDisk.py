@@ -44,11 +44,11 @@ class SaveToDisk:
         self.cfg_listeners = ConfigHandler(cfg_dir,"listeners.json",save_as_list=True)
         self.cfg_registration = ConfigHandler(cfg_dir,"registration.json")
         self.cfg_actions = ConfigHandler(cfg_dir,"actions.json")
-
+        
     def _add_listeneres(self):
         listeners_dict = self.cfg_listeners.read()
         for listener_id,listener_data in listeners_dict.iteritems():
-            self.resources.listeners.add(listener_id,listener_data)
+            self.resources.listener_add(listener_id,listener_data)
 
     def _add_actions(self):
         actions_dict = self.cfg_actions.read()
@@ -59,15 +59,16 @@ class SaveToDisk:
                 os.path.join(root, name)
                 if name.lower().endswith(file_extension):
                     path = os.path.join(root, name)
-                    action_name = name[:-len(file_extension)]
+                    action_id = name[:-len(file_extension)]
+                    action_display_name = action_id.replace("_"," ")
                     with open(path,'r') as f:
                         action_text = f.read()
-                        self.resources.actions.add(action_text,action_name)
+                    self.resources.action_add(action_text, action_id, action_display_name)
 
     def _register_actions(self):
         reg_dict = self.cfg_registration.read()
         for listener_id, action_id in reg_dict.iteritems():
-            self.resources.registration.register(listener_id,action_id)
+            self.resources.register(listener_id,action_id)
 
     def load_config(self):
         """Read saved data and fill the resources object with it."""

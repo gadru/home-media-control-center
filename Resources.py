@@ -1,26 +1,29 @@
 #!/usr/bin/python
 """Implements the external actions the system can perform."""
 import collections
-import Interfaces
-import Listeners
 import time
 import sys
+import logging 
+
+import Interfaces
+import Listeners
 
 class Action:
-    def __init__(self, resources=None, func_text=None, id=None):
+    def __init__(self, resources=None, func_text=None, id=None, display_name=None):
         """Create an action. if one of the inputs is None, creates null action"""
         self.resources = resources
         if None not in (resources, func_text, id):
             self.func_text = func_text
             self.id = id
+            self.display_name = display_name
         else: #Null action
             self.func_text ="""def execute(*args,**kwargs):\n\t"Does nothing."\n\tprint 'no action'"""
             self.id = "null_action"
+            self.display_name = "-"
         exec(self.func_text)
         self.func = execute
         self.doc = str(execute.__doc__)
-        
-        
+
     def __call__(self, *args, **kwargs):
         self.func(self.resources, *args, **kwargs)
 
@@ -28,10 +31,11 @@ class RegistrationHandler:
     def __init__(self):
         self.listener_id_to_action_id = dict() # Choose what function the listeners activates.
         self.null_action_id = Action().id
+
     def unregister(self,listener_id):
         """The listener will not invoke any action."""
         self.register(listener_id, self.null_action_id)
-        
+
     def register(self,listener_id,action_id):
         """Set a given action to be triggered by event from given listener."""
         self.listener_id_to_action_id[listener_id] = action_id
@@ -52,8 +56,11 @@ class RegistrationHandler:
 
     def get_action_id(self,listener_id):
         return self.listener_id_to_action_id[listener_id]
-    
+
     def get_data(self):
+        return self.listener_id_to_action_id.copy()
+        
+    def get_data_dict(self):
         return self.listener_id_to_action_id.copy()
 
 class ListenersHandler:
@@ -61,14 +68,18 @@ class ListenersHandler:
         self.resources = resources
         self.registration = registration
         self.listeners = dict() # Objects that inherit from BaseListener class.
-        
-    def add(self,listener_id,listener_data):
-        """Add a new listener object. If it already exists, replace it."""
-        saved_params = listener_data.copy()
-        sent_params = listener_data.copy()
-        classname = sent_params.pop("classname")
+
+    def __create_object(self, listener_id, listener_dict):
+        params = listener_dict.copy()
+        classname = params.pop("classname")
+        display_name = params.pop("display_name")
         listener_class = Listeners.classes[classname]
-        listener_object = listener_class(self.resources,listener_id,saved_params,**sent_params)
+        listener_object = listener_class(self.resources, listener_id, display_name, params, classname)
+        return listener_object
+
+    def add(self,listener_id,listener_dict):
+        """Add a new listener object. If it already exists, replace it."""
+        listener_object = self.__create_object(listener_id, listener_dict)
         if listener_id not in self.listeners:
             self.registration.add_listener(listener_id)
         self.listeners[listener_id] = listener_object
@@ -85,7 +96,7 @@ class ListenersHandler:
     def stop(self,listener_id):
         """Stop a listener by id."""
         self.listeners[listener_id].stop()
-                
+
     def start_all(self):
         """Start all listeners."""
         for l in self.listeners:
@@ -99,13 +110,23 @@ class ListenersHandler:
     def get_data(self):
         return self.listeners.copy()
 
+    def get_data_dict(self):
+        result = dict()
+        for listener_id, listener_obj in self.listeners.iteritems():
+            data = dict()
+            data["display_name"] = listener_obj.display_name
+            data["params"] = listener_obj.get_params()
+            data["classname"] = listener_obj.classname
+            result[listener_id] = data
+        return result
+
 class ActionsHandler:
     def __init__(self, resources, registration):
         self.resources = resources
         self.registration = registration
         self.available_actions =  dict() # All Actions in the system.
-
         self._add_default() 
+        self.log = logging.getLogger("Actions")
 
     def _add_obj(self,action):
         self.available_actions[action.id] = action
@@ -114,52 +135,100 @@ class ActionsHandler:
         """Add a default action to all listeners."""
         null_action = Action()
         self._add_obj(null_action)
-        
-    def add(self, func_text, data):
+
+    def add(self, func_text, action_id, display_name):
         """Add a new action to be available. Add listener_id to also register it."""
-        action = Action(self.resources, func_text, data)
+        action = Action(self.resources, func_text, action_id, display_name)
         self._add_obj(action)
-        
+
     def remove(self,action_id):
         self.registration.remove_action(action_id)
         self.available_actions.pop(action_id)  
 
+    def _run_action(self, action, *args, **kwargs):
+        action(*args,**kwargs)
+
     def execute(self,listener_id,*args,**kwargs):
         """Performs the action registered to the listener, passes *args,**kwargs as arguments."""
-        print "Triggered %s"%str(listener_id)
+        self.log.info("Triggered %s"%str(listener_id))
         try:
             action_id = self.registration.get_action_id(listener_id)
         except KeyError:
-            print "Failed to find action for listener_id: %s"%listener_id
+            self.log.info("Failed to find action for listener_id: %s"%str(listener_id))
+            return 
+
         try:
-            print "action_id = ", repr(action_id)
+            self.log.info("action_id = %s"%repr(action_id))
             action = self.available_actions[action_id]
         except KeyError:
-            print("Failed to find action_id: %s"%action_id)
+            self.log.info("Failed to find action_id: %s"%str(action_id))
         except:
-            print "Unexpected error:", sys.exc_info()[0]
-            
-        action(*args,**kwargs)
+            self.log.info("Unexpected error: %s" %str(sys.exc_info()[0]))
+
+        self.log.info("Running action: %s"%str(action_id))
+        self._run_action(action,*args,**kwargs)
+        self.log.info("Done action %s"%str(action_id))
 
     def get_data(self):
         return self.available_actions.copy()
 
+    def get_data_dict(self):
+        result = dict()
+        
+        for action_id, action_obj in self.available_actions.iteritems():
+            data = dict()
+            data["display_name"] = action_obj.display_name
+            data["func_text"] = action_obj.func_text
+            result[action_id] = data.copy()
+        return result
+
 class Resources:
     def __init__(self):
+        self.log = logging.getLogger("Resources")
         # Interfaces
         self.interfaces = dict()
-        print time.strftime("%H:%M:%S"), "Interface - Lifx"
+        self.log.info("Interface - Lifx")
         self.interfaces["Lifx"] = Interfaces.Lifx.Lifx()
-        print time.strftime("%H:%M:%S"), "Interface - Kodi"
+        self.log.info("Interface - Kodi")
         self.interfaces["Kodi"] = Interfaces.Kodi.Kodi('jesse')
-        print time.strftime("%H:%M:%S"), "Interface - Chromecast"
+        self.log.info("Interface - Chromecast")
         self.interfaces["Chromecast"] = Interfaces.Chromecast.Chromecast()
         # Data store
-        print time.strftime("%H:%M:%S"), "stored_data"
+        self.log.info("stored_data")
         self.stored_data = collections.defaultdict(dict) # Data and states for actions.
-        print time.strftime("%H:%M:%S"), "registration"
+        self.log.info("registration")
         self.registration = RegistrationHandler()
-        print time.strftime("%H:%M:%S"), "actions"
+        self.log.info("actions")
         self.actions = ActionsHandler(self, self.registration)
-        print time.strftime("%H:%M:%S"), "listeners"
+        self.log.info("listeners")
         self.listeners = ListenersHandler(self,self.registration)
+
+    def register(self,listener_id,action_id):
+        self.registration.register(listener_id,action_id)
+
+    def unregister(self,listener_id):
+        self.registration.unregister(listener_id)
+
+    def get_registrations(self):
+        return self.registration.get_data()
+
+    def listener_add(self,listener_id,listener_dict):
+        self.listeners.add(listener_id,listener_dict)
+
+    def listener_remove(self,listener_id):
+        self.listeners.add(listener_id)
+
+    def get_listeners(self):
+        return self.listeners.get_data_dict()
+
+    def action_add(self, func_text, action_id, display_name):
+        self.actions.add(func_text, action_id, display_name)
+
+    def action_remove(self, action_id): 
+        self.actions.remove(action_id)
+
+    def action_execute(self, *args,**kwargs):
+        self.actions.execute(*args,**kwargs)
+
+    def get_actions(self):
+        return self.actions.get_data_dict()
