@@ -23,19 +23,19 @@ def get_data(hs):
     action_names = dict()
     for action_id in actions:
         action_names[action_id] = actions[action_id]["display_name"]
-    
+
+    data["listeners"]=dict()
     for listener_id, action_id in hs.get_registrations().iteritems():
         listener_display_name = listeners[listener_id]["display_name"]
         action_display_name = actions[action_id]["display_name"]
-        data["registrations"][listener_id] = {\
+        data["listeners"][listener_id] = {\
                 "listener_display_name" : listener_display_name,
                 "action_id" : action_id,
                 "action_display_name" : action_display_name,
                 "options" : action_names,
-                "chosen_option": registrations[listener_id]
+                "chosen_option": registrations[listener_id],
+                "advanced": listeners[listener_id]
             }
-    
     data["actions"] = actions
-    data["listeners"] = listeners
         
     return data

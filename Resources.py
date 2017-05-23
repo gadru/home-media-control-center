@@ -4,6 +4,7 @@ import collections
 import time
 import sys
 import logging 
+import threading
 
 import Interfaces
 import Listeners
@@ -202,33 +203,43 @@ class Resources:
         self.actions = ActionsHandler(self, self.registration)
         self.log.info("listeners")
         self.listeners = ListenersHandler(self,self.registration)
-
+        self.lock = threading.Lock()
     def register(self,listener_id,action_id):
-        self.registration.register(listener_id,action_id)
+        with self.lock:
+            self.registration.register(listener_id,action_id)
 
     def unregister(self,listener_id):
-        self.registration.unregister(listener_id)
+        with self.lock:
+            self.registration.unregister(listener_id)
 
     def get_registrations(self):
-        return self.registration.get_data()
+        with self.lock:
+            return self.registration.get_data()
 
     def listener_add(self,listener_id,listener_dict):
-        self.listeners.add(listener_id,listener_dict)
+        with self.lock:
+            self.listeners.add(listener_id,listener_dict)
 
     def listener_remove(self,listener_id):
-        self.listeners.add(listener_id)
+        with self.lock:
+            self.listeners.add(listener_id)
 
     def get_listeners(self):
-        return self.listeners.get_data_dict()
+        with self.lock:
+            return self.listeners.get_data_dict()
 
     def action_add(self, func_text, action_id, display_name):
-        self.actions.add(func_text, action_id, display_name)
+        with self.lock:
+            self.actions.add(func_text, action_id, display_name)
 
     def action_remove(self, action_id): 
-        self.actions.remove(action_id)
+        with self.lock:
+            self.actions.remove(action_id)
 
     def action_execute(self, *args,**kwargs):
-        self.actions.execute(*args,**kwargs)
+        with self.lock:
+            self.actions.execute(*args,**kwargs)
 
     def get_actions(self):
-        return self.actions.get_data_dict()
+        with self.lock:
+            return self.actions.get_data_dict()

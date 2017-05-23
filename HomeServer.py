@@ -152,20 +152,23 @@ def get_data():
 ### main ###
 ############
     
-def main(): 
-    global_logger.info("Running HomeServer")
-    hs.start()
-    global_logger.info("started HomeServer.")
-    global_logger.info("Running flask")
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(threaded=True,host="0.0.0.0",port="8080")
-    try:
-        while 1:
-            pass
-    except KeyboardInterrupt:
-        hs.stop()
-        global_logger.info("stopped.")
-        raise KeyboardInterrupt
+def main():
+        global_logger.info("Running HomeServer")
+        hs.start()
+        global_logger.info("started HomeServer.")
+        global_logger.info("Running flask")
+        app.config['TEMPLATES_AUTO_RELOAD'] = True
+        app.run(threaded=True,host="0.0.0.0",port="8080")
+        try:
+            while 1:
+                pass
+        except KeyboardInterrupt:
+            hs.stop()
+            global_logger.info("stopped.")
+            raise KeyboardInterrupt
 
 if __name__ == '__main__': 
-    main()
+    try:
+        main()
+    except:
+        global_logger.exception("crashed")

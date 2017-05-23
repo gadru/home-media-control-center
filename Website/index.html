@@ -1,38 +1,72 @@
 <!DOCTYPE html>
 <html>
   <head>
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     
-    <title>Home Server</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     
+    <title>Home Server</title>
+    <style>
+    
+    </style>
   </head>
   <body>
-    <div id="registrations"></div>
+    <div id="listeners"></div>
     
     <script>
-    var write_registrations = function(json){
-        $("#registrations").empty()            
-        var registrations = json["registrations"];
-        
-        $.each(registrations, function(listener_id,reg_data)
+    var write_listeners = function(json){
+        $("#listeners").empty();
+        var listeners = json["listeners"];
+        $.each(listeners, function(listener_id,reg_data)
         {
+            //// listener ////
+            var listener_div = $("<div>",{"class": "listeners"});
+            listener_div.append($("<div>",{"class":"listner_name","text":reg_data["listener_display_name"]}));
+            //select//
+            //select build options.    
             var action_options_dict = reg_data["options"];
             var action_options = ""
             $.each(action_options_dict, function(action_id, action_display_name){
-                action_options += '<option value="'+action_id+'">'+action_display_name+'</option>'
-            });
-            
-            $("#registrations").append($("<div>", {"class": "listener_name", "text" : reg_data["listener_display_name"]}));
-            select = $("<select>", {"class": "action_id"}).append(action_options);
+                action_options += '<option value="'+action_id+'">'+action_display_name+'</option>';
+            });       
+            //select build
+            var selector_name = listener_id+"_action";
+            var select_div = $("<div>", {"class":"action_select"});            
+            select_div.append($("<div>", {"text" : "action"}));            
+            var select = $("<select>", {"name":selector_name}).append(action_options)
             select.val(reg_data["chosen_option"]);
-            $("#registrations").append(select);
-        })
-        
+            select_div.append(select);
+            listener_div.append(select_div);
+            
+            //advanced
+            var advanced = reg_data["advanced"];
+            var advanced_div = $("<div>",{"class":"advanced"});
+            var params_div = $("<div>",{"class":"params"});
+            
+            $.each(advanced["params"], function(param_name, param_value){
+                var param_div = $("<div>");
+                param_div.append($("<div>",{"text":param_name}));
+                param_div.append($("<div>",{"text":param_value}));
+                params_div.append(param_div)
+            });
+            advanced_div.append(params_div)
+  
+            listener_div.append(advanced_div);            
+            
+            $("#listeners").append(listener_div);
+        });
+        $("#listeners").append("<submit>");
     };
     
-    var write_data = function(json){            
-        write_registrations(json);
+    
+        
+    var write_data = function(json){
+        write_listeners(json);
     };
     
     var update_data = function(){
